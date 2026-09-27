@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#fffaf7">
+<title>TripMatch</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg:#fffaf7;--card:#fff;--ink:#17212b;--muted:#69737c;--line:#eee1da;--accent:#ff5961}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select{font:inherit} button{cursor:pointer}
+.wrap{max-width:760px;margin:auto;padding:20px}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:8px 0 20px}
+.brand{font-size:25px;font-weight:950;letter-spacing:-1.1px} .brand span{color:var(--accent)}
+.navbtn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 13px;font-weight:750}
+.card{background:#fff;border:1px solid var(--line);border-radius:28px;padding:25px;box-shadow:0 18px 55px #2b201b12;margin:16px 0}
+.eyebrow{font-size:12px;letter-spacing:1.35px;text-transform:uppercase;font-weight:900;color:var(--accent)}
+h1{font-size:44px;line-height:1;letter-spacing:-2.7px;margin:12px 0 16px}
+h2{font-size:30px;line-height:1.05;letter-spacing:-1.5px;margin:8px 0 12px}
+.muted{color:var(--muted);line-height:1.55}
+.primary,.secondary{width:100%;padding:15px 16px;border-radius:15px;font-weight:900}
+.primary{border:0;background:var(--accent);color:white;box-shadow:0 10px 25px #ff59612c}
+.secondary{border:1px solid #ddd0c9;background:#fff;color:var(--ink)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{margin:17px 0} .field label{display:block;font-weight:800;margin-bottom:8px}
+.field input,.field select{width:100%;border:1px solid #ddd0c9;border-radius:14px;padding:14px;background:#fff;color:var(--ink)}
+.tags{display:flex;flex-wrap:wrap;gap:8px}.tag{border:1px solid #ddd0c9;background:#fff;border-radius:999px;padding:10px 13px;font-weight:750}.tag.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.hero{height:290px;border-radius:22px;background-size:cover;background-position:center;margin:-25px -25px 22px}
+.badges{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}
+.badge,.person{font-size:13px;padding:8px 10px;border-radius:999px;background:#f5efec}
+.progress{height:6px;background:#eee5e0;border-radius:99px;overflow:hidden;margin:15px 0}
+.progress i{display:block;height:100%;background:var(--accent)}
+.people{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:15px 0}
+.match{text-align:center} .big{font-size:58px}
+.linkbox{word-break:break-all;background:#f7f3f1;border-radius:14px;padding:13px;font-size:13px;margin:12px 0}
+.summary{background:#faf6f3;border-radius:16px;padding:14px;margin:14px 0}.summary b{display:block;margin-bottom:5px}
+.notice{padding:13px;border-radius:14px;background:#fff1ee;color:#8f3d43;font-size:13px;line-height:1.45;margin:14px 0}
+.tiny{font-size:12px;color:#8b9298;text-align:center;margin:24px 0}
+.desttitle{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+
+.resultgrid{display:grid;gap:10px;margin:16px 0}
+.resultitem{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 15px;border:1px solid var(--line);border-radius:16px;background:#fff}
+.resultitem strong{font-size:17px}.resultmeta{font-size:12px;color:var(--muted);margin-top:3px}
+.matchlist{display:grid;gap:10px;margin:16px 0}.matchitem{padding:15px;border-radius:18px;background:#faf6f3;border:1px solid var(--line);text-align:left}
+.matchitem .place{font-weight:900;font-size:18px}.statusline{font-size:13px;color:var(--muted);margin:8px 0 0}
+
+.dashboard-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:8px}
+.dashboard-title{margin:6px 0 4px}.dashboard-code{font-size:12px;font-weight:850;letter-spacing:1px;color:var(--muted);text-transform:uppercase}
+.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:16px 0}.stat{background:#faf6f3;border:1px solid var(--line);border-radius:16px;padding:13px 10px;text-align:center}
+.stat strong{display:block;font-size:22px}.stat span{font-size:11px;color:var(--muted)}.sectiontitle{font-size:14px;font-weight:900;margin:20px 0 9px}
+.memberrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #f1e8e3}.memberrow:last-child{border-bottom:0}
+.membername{font-weight:850}.done{color:#26734d;background:#edf8f1}.waiting{color:#8a5a20;background:#fff5e7}.statuspill{font-size:11px;font-weight:850;padding:7px 9px;border-radius:999px;white-space:nowrap}
+.dashboard-actions{display:grid;gap:9px;margin-top:18px}.emptybox{padding:14px;border-radius:16px;background:#faf6f3;color:var(--muted);font-size:13px;line-height:1.45}
+
+
+.funstrip{display:flex;gap:7px;flex-wrap:wrap;margin:13px 0 2px}.funpill{font-size:11px;font-weight:850;padding:7px 9px;border-radius:999px;background:#fff3f2;color:#cf4f51;border:1px solid #ffd8d5}
+.desttagline{font-size:15px;line-height:1.45;margin:4px 0 12px;color:#626b75}.fitbox{margin:12px 0;padding:12px 13px;border-radius:16px;background:#faf6f3;border:1px solid var(--line)}
+.fitbox b{display:block;font-size:12px;margin-bottom:4px}.fitbox span{font-size:13px;color:var(--muted)}.funpick{margin-top:9px}.destinationcount{font-size:12px;font-weight:800;color:#8b9298;margin-top:12px;text-align:center}
+
+.swipecard{position:relative;touch-action:none;user-select:none;-webkit-user-select:none;transform-origin:50% 92%;will-change:transform,opacity}
+.swipe-stamp{position:absolute;top:38px;z-index:5;padding:7px 12px;border:3px solid currentColor;border-radius:12px;font-size:25px;font-weight:950;letter-spacing:1.5px;opacity:0;pointer-events:none;background:#ffffffdf}
+.swipe-like{right:28px;color:#238653;transform:rotate(10deg)}
+.swipe-pass{left:28px;color:#c44950;transform:rotate(-10deg)}
+.swipehint{text-align:center;font-size:12px;color:#8b9298;margin:12px 0 0}.swipecard button{touch-action:manipulation}
+@media(max-width:560px){h1{font-size:40px}.wrap{padding:18px}.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="nav">
+    <div class="brand">Trip<span>Match</span></div>
+    <button class="navbtn" onclick="goHome()">Home</button>
+  </div>
+  <div id="app"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://grjeliceompgijgcsrvt.supabase.co";
+const SUPABASE_KEY = "sb_publishable_6sKOKMtEAqOWlo6y8PoTEA_VGoFtSUX";
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const TRIP_TABLE = "TripMatch";
+const MEMBER_TABLE = "members";
+const VOTE_TABLE = "votes";
+
+const DESTINATIONS = [
+  {name:"Mallorca",country:"Spain",emoji:"🇪🇸",price:850,temp:"Warm",vibes:["Beach","Food","Nightlife","Views"],badge:"Island favorite",tagline:"Turquoise coves, beach clubs and sunset dinners.",img:"https://images.unsplash.com/photo-1530789253388-582c481c54b0?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Lisbon",country:"Portugal",emoji:"🇵🇹",price:750,temp:"Warm",vibes:["City","Food","Culture","Nightlife","Views"],badge:"Foodie pick",tagline:"Pastéis, rooftops, tiled streets and Atlantic light.",img:"https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Sicily",country:"Italy",emoji:"🇮🇹",price:900,temp:"Warm",vibes:["Beach","Food","Culture","Nature"],badge:"Slow travel",tagline:"Volcano views, beach days and seriously good food.",img:"https://images.unsplash.com/photo-1529260830199-42c24126f198?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Santorini",country:"Greece",emoji:"🇬🇷",price:1250,temp:"Warm",vibes:["Beach","Romance","Views","Food"],badge:"Romantic",tagline:"Clifftop sunsets, white villages and Aegean views.",img:"https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Split",country:"Croatia",emoji:"🇭🇷",price:800,temp:"Warm",vibes:["Beach","Food","Adventure","Culture"],badge:"Easy mix",tagline:"Old town energy with islands and swimming nearby.",img:"https://images.unsplash.com/photo-1555990538-1e6cdae1cd3d?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Barcelona",country:"Spain",emoji:"🇪🇸",price:900,temp:"Warm",vibes:["City","Food","Nightlife","Culture","Beach"],badge:"All-rounder",tagline:"Architecture, tapas, nightlife and a city beach.",img:"https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Crete",country:"Greece",emoji:"🇬🇷",price:850,temp:"Warm",vibes:["Beach","Food","Nature","Adventure"],badge:"Road-trip ready",tagline:"Big beaches, mountain villages and long lunches.",img:"https://images.unsplash.com/photo-1498503182468-3b51cbb6cb24?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Prague",country:"Czechia",emoji:"🇨🇿",price:600,temp:"Mild",vibes:["City","Culture","Food","Nightlife","Romance"],badge:"Great value",tagline:"Fairytale streets, cozy bars and late-night energy.",img:"https://images.unsplash.com/photo-1541849546-216549ae216d?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Madeira",country:"Portugal",emoji:"🇵🇹",price:950,temp:"Mild",vibes:["Nature","Adventure","Views","Romance"],badge:"Nature wow",tagline:"Cliff roads, levada hikes and dramatic ocean views.",img:"https://images.unsplash.com/photo-1526392060635-9d6019884377?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Rome",country:"Italy",emoji:"🇮🇹",price:950,temp:"Mild",vibes:["City","Food","Culture","Romance"],badge:"Classic",tagline:"Pasta, piazzas and ancient history around every corner.",img:"https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Paris",country:"France",emoji:"🇫🇷",price:1300,temp:"Mild",vibes:["City","Food","Culture","Romance"],badge:"Iconic",tagline:"Cafés, museums, pretty streets and date-night energy.",img:"https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Amsterdam",country:"Netherlands",emoji:"🇳🇱",price:1100,temp:"Mild",vibes:["City","Culture","Food","Nightlife"],badge:"Weekend pick",tagline:"Canals, bikes, design spots and easygoing nights out.",img:"https://images.unsplash.com/photo-1534351590666-13e3e96b5017?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Budapest",country:"Hungary",emoji:"🇭🇺",price:550,temp:"Mild",vibes:["City","Food","Nightlife","Culture","Romance"],badge:"Budget hero",tagline:"Thermal baths, ruin bars and grand river views.",img:"https://images.unsplash.com/photo-1549877452-9c387954fbc2?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Vienna",country:"Austria",emoji:"🇦🇹",price:850,temp:"Mild",vibes:["City","Culture","Food","Romance"],badge:"Elegant",tagline:"Coffee houses, palaces and a polished city break.",img:"https://images.unsplash.com/photo-1516550893923-42d28e5677af?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Dubrovnik",country:"Croatia",emoji:"🇭🇷",price:1000,temp:"Warm",vibes:["Beach","Culture","Views","Romance"],badge:"Scenic",tagline:"Stone walls, blue water and cinematic Adriatic views.",img:"https://images.unsplash.com/photo-1555990538-1e6cdae1cd3d?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Mykonos",country:"Greece",emoji:"🇬🇷",price:1450,temp:"Warm",vibes:["Beach","Nightlife","Romance","Views"],badge:"Party island",tagline:"Beach clubs, white lanes and glamorous late nights.",img:"https://images.unsplash.com/photo-1601581875309-fafbf2d3ed3a?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Corfu",country:"Greece",emoji:"🇬🇷",price:850,temp:"Warm",vibes:["Beach","Nature","Food","Romance"],badge:"Green island",tagline:"Emerald coves, Venetian streets and relaxed tavernas.",img:"https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Malta",country:"Malta",emoji:"🇲🇹",price:800,temp:"Warm",vibes:["Beach","Culture","Nightlife","Adventure"],badge:"Sunny escape",tagline:"Golden cities, swimming spots and easy island hopping.",img:"https://images.unsplash.com/photo-1514222134-b57cbb8ce073?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Nice",country:"France",emoji:"🇫🇷",price:1100,temp:"Warm",vibes:["Beach","Food","Romance","Views"],badge:"Riviera mood",tagline:"Seafront strolls, rosé lunches and old-town charm.",img:"https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Porto",country:"Portugal",emoji:"🇵🇹",price:650,temp:"Mild",vibes:["City","Food","Culture","Romance","Views"],badge:"Cozy pick",tagline:"River sunsets, tiled facades and long food stops.",img:"https://images.unsplash.com/photo-1555881400-69c7b0615f80?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Seville",country:"Spain",emoji:"🇪🇸",price:700,temp:"Warm",vibes:["City","Food","Culture","Romance","Nightlife"],badge:"Late-night charm",tagline:"Orange trees, tapas hopping and warm Andalusian nights.",img:"https://images.unsplash.com/photo-1559564484-e48b3e040ff4?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Copenhagen",country:"Denmark",emoji:"🇩🇰",price:1200,temp:"Mild",vibes:["City","Food","Culture","Views"],badge:"Design city",tagline:"Harbor swims, great food and effortlessly cool streets.",img:"https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Stockholm",country:"Sweden",emoji:"🇸🇪",price:1100,temp:"Mild",vibes:["City","Food","Culture","Nature","Views"],badge:"Scandi escape",tagline:"Island neighborhoods, fika stops and waterfront views.",img:"https://images.unsplash.com/photo-1509356843151-3e7d96241e11?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Reykjavik",country:"Iceland",emoji:"🇮🇸",price:1500,temp:"Mild",vibes:["Nature","Adventure","Views","Romance"],badge:"Bucket list",tagline:"Waterfalls, hot springs and otherworldly landscapes.",img:"https://images.unsplash.com/photo-1504893524553-b855bce32c67?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Marrakech",country:"Morocco",emoji:"🇲🇦",price:700,temp:"Warm",vibes:["Food","Culture","Adventure","Romance"],badge:"Sensory trip",tagline:"Riads, souks, rooftop dinners and desert-day options.",img:"https://images.unsplash.com/photo-1597212618440-806262de4f6b?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Istanbul",country:"Türkiye",emoji:"🇹🇷",price:650,temp:"Mild",vibes:["City","Food","Culture","Nightlife","Views"],badge:"Big energy",tagline:"Bosphorus views, bazaars and one amazing meal after another.",img:"https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Tenerife",country:"Spain",emoji:"🇪🇸",price:900,temp:"Warm",vibes:["Beach","Nature","Adventure","Views"],badge:"Year-round sun",tagline:"Volcanic landscapes, beach days and mountain drives.",img:"https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Ibiza",country:"Spain",emoji:"🇪🇸",price:1250,temp:"Warm",vibes:["Beach","Nightlife","Food","Romance"],badge:"High energy",tagline:"Sunset spots, hidden coves and world-famous nights out.",img:"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Lake Como",country:"Italy",emoji:"🇮🇹",price:1350,temp:"Mild",vibes:["Romance","Views","Food","Nature"],badge:"Dreamy",tagline:"Lake views, elegant villages and slow romantic days.",img:"https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Amalfi Coast",country:"Italy",emoji:"🇮🇹",price:1500,temp:"Warm",vibes:["Beach","Romance","Food","Views"],badge:"Postcard trip",tagline:"Cliffside towns, lemon everything and unreal sea views.",img:"https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?auto=format&fit=crop&w=1200&q=85"}
+]
+
+let trip = null;
+let travelerName = "";
+let idx = 0;
+let likes = [];
+let selectedVibes = [];
+let filteredDestinations = DESTINATIONS;
+let currentUser = null;
+
+const app = () => document.getElementById("app");
+const esc = (s="") => String(s).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[ch]));
+
+
+async function ensureUser(){
+  if(currentUser) return currentUser;
+  const {data:{session}} = await db.auth.getSession();
+  if(session?.user){
+    currentUser = session.user;
+    return currentUser;
+  }
+  const {data,error} = await db.auth.signInAnonymously();
+  if(error) throw error;
+  currentUser = data.user || data.session?.user;
+  return currentUser;
+}
+
+function goHome(){
+  history.replaceState({}, "", location.pathname);
+  trip=null; travelerName=""; idx=0; likes=[]; selectedVibes=[]; filteredDestinations=DESTINATIONS;
+  home();
+}
+
+function home(){
+  app().innerHTML = `
+  <div class="card">
+    <div class="eyebrow">Smarter group travel</div>
+    <h1>Match on trips that actually fit.</h1>
+    <p class="muted">Set dates, budget and travel vibe first. TripMatch narrows the options before everyone swipes.</p>
+    <button class="primary" onclick="createForm()">Create a trip →</button>
+  </div>
+  <div class="tiny">TripMatch V10 · More places, more fun</div><div class="destinationcount">${DESTINATIONS.length} destinations ready to match ✈️</div>`;
+}
+
+function createForm(){
+  selectedVibes=[];
+  const vibes=["Beach","City","Food","Nightlife","Culture","Nature","Adventure","Romance","Views"];
+  app().innerHTML = `
+  <div class="card">
+    <div class="eyebrow">Create a trip</div>
+    <h2>What should this trip feel like?</h2>
+    <div class="field"><label>Trip name</label><input id="tripTitle" maxlength="50" placeholder="Summer escape"></div>
+    <div class="field"><label>Your name</label><input id="ownerName" maxlength="50" placeholder="Frida"></div>
+    <div class="field"><label>Flying from</label><input id="origin" maxlength="50" placeholder="Copenhagen"></div>
+    <div class="row"><div class="field"><label>Start date</label><input id="startDate" type="date"></div><div class="field"><label>End date</label><input id="endDate" type="date"></div></div>
+    <div class="field"><label>Budget per person</label>
+      <select id="budget"><option>Under €500</option><option selected>€500–€1,000</option><option>€1,000–€1,500</option><option>€1,500+</option></select>
+    </div>
+    <div class="field"><label>Travel vibe</label><div class="tags">${vibes.map(v=>`<button type="button" class="tag" data-vibe="${v}" onclick="toggleVibe(this,'${v}')">${v}</button>`).join("")}</div></div>
+    <button type="button" class="secondary funpick" onclick="surpriseVibes()">🎲 Surprise me with 3 vibes</button>
+    <div class="field"><label>Weather</label><select id="weather"><option value="Any">Any</option><option value="Warm">Warm</option><option value="Mild">Mild</option></select></div>
+    <button class="primary" onclick="createTrip()">Create smart TripMatch →</button>
+  </div>`;
+}
+
+function toggleVibe(btn,vibe){
+  btn.classList.toggle("on");
+  selectedVibes.includes(vibe)?selectedVibes=selectedVibes.filter(v=>v!==vibe):selectedVibes.push(vibe);
+}
+
+function surpriseVibes(){
+  const all=["Beach","City","Food","Nightlife","Culture","Nature","Adventure","Romance","Views"];
+  selectedVibes=[...all].sort(()=>Math.random()-.5).slice(0,3);
+  document.querySelectorAll(".tag[data-vibe]").forEach(btn=>btn.classList.toggle("on",selectedVibes.includes(btn.dataset.vibe)));
+}
+
+function whyItFits(d){
+  const p=trip?parsePrefs(trip.preferences):{};
+  const chosen=p.vibes||[];
+  const overlap=d.vibes.filter(v=>chosen.includes(v));
+  if(overlap.length) return `Matches your ${overlap.slice(0,3).join(" + ")} vibe`;
+  if(p.weather&&p.weather!=="Any"&&d.temp===p.weather) return `Fits your ${p.weather.toLowerCase()} weather pick`;
+  return `A strong ${d.vibes.slice(0,2).join(" + ")} option`;
+}
+
+
+function budgetMax(label){
+  if(label==="Under €500")return 500;
+  if(label==="€500–€1,000")return 1000;
+  if(label==="€1,000–€1,500")return 1500;
+  return 99999;
+}
+
+function parsePrefs(value){try{return value?JSON.parse(value):{};}catch(e){return {};}}
+
+function rankedDestinations(prefs){
+  const max=budgetMax(prefs.budget||"€1,500+");
+  let list=DESTINATIONS.filter(d=>d.price<=max);
+  if(prefs.weather&&prefs.weather!=="Any"){const w=list.filter(d=>d.temp===prefs.weather); if(w.length>=3)list=w;}
+  const vibes=prefs.vibes||[];
+  if(vibes.length){
+    list=list.map(d=>({...d,score:d.vibes.filter(v=>vibes.includes(v)).length})).sort((a,b)=>b.score-a.score||a.price-b.price);
+    const matches=list.filter(d=>d.score>0);
+    if(matches.length>=3)list=matches;
+  }
+  return list.length?list:DESTINATIONS.slice(0,5);
+}
+
+async function createTrip(){
+  try{
+    await ensureUser();
+
+    const title=document.getElementById("tripTitle").value.trim();
+    const owner=document.getElementById("ownerName").value.trim();
+    const origin=document.getElementById("origin").value.trim();
+    const budget=document.getElementById("budget").value;
+    const prefs={
+      startDate:document.getElementById("startDate").value,
+      endDate:document.getElementById("endDate").value,
+      budget,
+      vibes:selectedVibes,
+      weather:document.getElementById("weather").value
+    };
+
+    if(!title||!owner){
+      alert("Add a trip name and your name.");
+      return;
+    }
+
+    const code=Math.random().toString(36).slice(2,8).toUpperCase();
+
+    const {data,error}=await db.from(TRIP_TABLE).insert({
+      code,
+      title,
+      owner,
+      origin:origin||null,
+      budget,
+      preferences:JSON.stringify(prefs),
+      owner_user_id:currentUser.id
+    }).select().single();
+
+    if(error) throw error;
+
+    trip=data;
+    travelerName=owner;
+    filteredDestinations=rankedDestinations(prefs);
+
+    const {error:memberError}=await db.from(MEMBER_TABLE).insert({
+      trip_code:code,
+      name:owner,
+      user_id:currentUser.id
+    });
+
+    if(memberError) throw memberError;
+
+    showInvite();
+  }catch(err){
+    alert("Could not create trip: "+err.message);
+  }
+}
+
+function inviteUrl(){
+  return location.origin+location.pathname+"?trip="+encodeURIComponent(trip.code);
+}
+
+function preferenceSummary(){
+  const p=parsePrefs(trip.preferences);
+  const dates=(p.startDate&&p.endDate)?`${p.startDate} → ${p.endDate}`:"Flexible dates";
+  const vibes=(p.vibes&&p.vibes.length)?p.vibes.join(" · "):"Any vibe";
+  return `<div class="summary"><b>Your match settings</b><span class="muted">${esc(dates)}<br>${esc(p.budget||trip.budget||"Flexible budget")} · ${esc(p.weather||"Any weather")}<br>${esc(vibes)}</span></div>`;
+}
+
+function showInvite(){
+  const url=inviteUrl();
+  app().innerHTML=`
+  <div class="card">
+    <div class="eyebrow">Trip created</div>
+    <h2>${esc(trip.title)}</h2>
+    ${preferenceSummary()}
+    <p class="muted">Send this link to everyone coming. They will swipe the same filtered destinations.</p>
+    <div class="linkbox">${esc(url)}</div>
+    <div class="row">
+      <button class="secondary" onclick="shareInvite()">Share invite</button>
+      <button class="primary" onclick="startMySwipes()">Start my swipes</button>
+    </div>
+    <button class="secondary" style="margin-top:10px" onclick="showDashboard()">Open trip dashboard</button>
+  </div>`;
+}
+
+async function shareInvite(){
+  const url=inviteUrl();
+  if(navigator.share){
+    try{await navigator.share({title:"Join my TripMatch",text:"Swipe destinations with me on TripMatch",url});return;}catch(e){}
+  }
+  try{await navigator.clipboard.writeText(url);alert("Invite link copied!");}
+  catch(e){prompt("Copy this link:",url);}
+}
+
+function startMySwipes(){
+  idx=0;
+  likes=[];
+  swipe();
+}
+
+function inviteLanding(code){
+  app().innerHTML=`
+  <div class="card">
+    <div class="eyebrow">TripMatch invite</div>
+    <h2>You've been invited</h2>
+    <p class="muted">Enter your name to join the trip.</p>
+    <div class="field"><label>Your name</label><input id="joinName" maxlength="50" placeholder="Your name"></div>
+    <button class="primary" onclick="joinTrip('${esc(code)}')">Join trip →</button>
+  </div>`;
+}
+
+async function joinTrip(code){
+  try{
+    await ensureUser();
+
+    travelerName=document.getElementById("joinName")?.value.trim()||"";
+    if(!travelerName){
+      alert("Add your name.");
+      return;
+    }
+
+    const {data:existing,error:checkError}=await db.from(MEMBER_TABLE)
+      .select("*")
+      .eq("trip_code",code)
+      .eq("user_id",currentUser.id)
+      .limit(1);
+
+    if(checkError) throw checkError;
+
+    if(!existing||existing.length===0){
+      const {error:memberError}=await db.from(MEMBER_TABLE).insert({
+        trip_code:code,
+        name:travelerName,
+        user_id:currentUser.id
+      });
+
+      if(memberError) throw memberError;
+    }else{
+      travelerName=existing[0].name||travelerName;
+    }
+
+    const {data,error}=await db.from(TRIP_TABLE)
+      .select("*")
+      .eq("code",code)
+      .maybeSingle();
+
+    if(error) throw error;
+    if(!data) throw new Error("Trip not found.");
+
+    trip=data;
+    filteredDestinations=rankedDestinations(parsePrefs(trip.preferences));
+
+    app().innerHTML=`
+    <div class="card">
+      <div class="eyebrow">You're in</div>
+      <h2>${esc(trip.title)}</h2>
+      ${preferenceSummary()}
+      <p class="muted">Ready to swipe as <b>${esc(travelerName)}</b>?</p>
+      <button class="primary" onclick="startMySwipes()">Start swiping →</button>
+    </div>`;
+  }catch(err){
+    alert("Could not join trip: "+err.message);
+  }
+}
+
+
+async function showDashboard(){
+  if(!trip){home();return;}
+  app().innerHTML=`<div class="card"><h2>Loading trip dashboard…</h2><p class="muted">Checking who has joined and the latest matches.</p></div>`;
+  const [memberRes,voteRes]=await Promise.all([
+    db.from(MEMBER_TABLE).select("*").eq("trip_code",trip.code),
+    db.from(VOTE_TABLE).select("*").eq("trip_code",trip.code)
+  ]);
+  if(memberRes.error||voteRes.error){alert("Could not load the trip dashboard.");return;}
+  const rawMembers=memberRes.data||[], votes=voteRes.data||[];
+  const memberMap=new Map();
+  rawMembers.forEach(m=>{const key=m.user_id||`name:${m.name}`;if(!memberMap.has(key))memberMap.set(key,m);});
+  const members=[...memberMap.values()];
+  const voterIds=new Set(votes.map(v=>v.user_id||`name:${v.member_name}`));
+  const counts={};
+  votes.forEach(v=>{const voter=v.user_id||`name:${v.member_name}`;if(!counts[v.destination])counts[v.destination]=new Set();counts[v.destination].add(voter);});
+  const matches=Object.entries(counts).map(([destination,set])=>({destination,count:set.size}))
+    .filter(x=>members.length>1&&x.count===members.length).sort((a,b)=>a.destination.localeCompare(b.destination));
+  const memberRows=members.map(m=>{const key=m.user_id||`name:${m.name}`;const finished=voterIds.has(key);return `<div class="memberrow"><div class="membername">${esc(m.name)}</div><span class="statuspill ${finished?"done":"waiting"}">${finished?"✓ Swiped":"Waiting"}</span></div>`;}).join("");
+  const matchRows=matches.map(m=>{const d=DESTINATIONS.find(x=>x.name===m.destination)||{emoji:"✈️",name:m.destination,country:""};return `<div class="matchitem"><div class="place">${d.emoji} ${esc(d.name)}</div><div class="resultmeta">Everyone matched${d.country?` · ${esc(d.country)}`:""}</div></div>`;}).join("");
+  const p=parsePrefs(trip.preferences);
+  const dates=(p.startDate&&p.endDate)?`${p.startDate} → ${p.endDate}`:"Flexible dates";
+  const finishedCount=Math.min(voterIds.size,members.length);
+  app().innerHTML=`<div class="card">
+    <div class="dashboard-head"><div><div class="eyebrow">Trip dashboard</div><h2 class="dashboard-title">${esc(trip.title)}</h2><div class="dashboard-code">Trip code · ${esc(trip.code)}</div></div><button class="navbtn" onclick="showDashboard()">↻ Refresh</button></div>
+    <div class="summary"><b>${esc(dates)}</b><span class="muted">${esc(p.budget||trip.budget||"Flexible budget")} · ${esc(p.weather||"Any weather")}${trip.origin?`<br>Flying from ${esc(trip.origin)}`:""}</span></div>
+    <div class="statgrid"><div class="stat"><strong>${members.length}</strong><span>Travelers</span></div><div class="stat"><strong>${finishedCount}</strong><span>Swiped</span></div><div class="stat"><strong>${matches.length}</strong><span>Matches</span></div></div>
+    <div class="sectiontitle">Your group</div><div>${memberRows||`<div class="emptybox">No travelers have joined yet.</div>`}</div>
+    <div class="sectiontitle">Group matches</div>${matchRows?`<div class="matchlist">${matchRows}</div>`:`<div class="emptybox">${members.length<2?"Invite someone to start matching.":"No full-group match yet. Everyone can keep swiping and come back here to refresh."}</div>`}
+    <div class="dashboard-actions"><button class="primary" onclick="shareInvite()">Invite more friends</button><button class="secondary" onclick="resultsRefreshAttempts=0;results()">View full results</button><button class="secondary" onclick="restartSwipes()">Swipe again</button></div>
+  </div>`;
+}
+
+let swipeAnimating=false;
+
+function swipe(){
+  if(idx>=filteredDestinations.length){submitVotes();return;}
+  const d=filteredDestinations[idx];
+  app().innerHTML=`
+  <div class="card swipecard" id="swipeCard">
+    <div class="swipe-stamp swipe-pass" id="passStamp">PASS</div>
+    <div class="swipe-stamp swipe-like" id="likeStamp">LIKE</div>
+    <div class="hero" style="background-image:url('${d.img}')"></div>
+    <div class="desttitle">
+      <div><div class="eyebrow">${d.emoji} ${d.country}</div><h2>${d.name}</h2></div>
+      <b>${idx+1}/${filteredDestinations.length}</b>
+    </div>
+    <div class="funstrip"><span class="funpill">✨ ${d.badge||"TripMatch pick"}</span><span class="funpill">${d.temp==="Warm"?"☀️":"🌤️"} ${d.temp}</span></div>
+    <div class="desttagline">${esc(d.tagline||"")}</div>
+    <div class="badges"><span class="badge">Est. €${d.price}</span>${d.vibes.map(v=>`<span class="badge">${v}</span>`).join("")}</div>
+    <div class="fitbox"><b>Why it fits your trip</b><span>${esc(whyItFits(d))}</span></div>
+    <div class="progress"><i style="width:${((idx+1)/filteredDestinations.length)*100}%"></i></div>
+    <p class="muted">Swipe as <b>${esc(travelerName)}</b>.</p>
+    <div class="row">
+      <button class="secondary" onclick="swipeChoice(false)">✕ Pass</button>
+      <button class="primary" onclick="swipeChoice(true)">♥ Like</button>
+    </div>
+    <div class="swipehint">Pick your favorite: Pass ✕ or Like ♥</div>
+  </div>`;
+  bindSwipeGesture();
+}
+
+function bindSwipeGesture(){
+  const card=document.getElementById("swipeCard");
+  const likeStamp=document.getElementById("likeStamp");
+  const passStamp=document.getElementById("passStamp");
+  if(!card) return;
+
+  let active=false,startX=0,startY=0,dx=0,axis=null;
+
+  const start=(x,y)=>{
+    if(swipeAnimating) return;
+    active=true; startX=x; startY=y; dx=0; axis=null;
+    card.style.transition="none";
+  };
+
+  const move=(x,y)=>{
+    if(!active || swipeAnimating) return false;
+    const moveX=x-startX;
+    const moveY=y-startY;
+    if(!axis && (Math.abs(moveX)>5 || Math.abs(moveY)>5)){
+      axis=Math.abs(moveX)>=Math.abs(moveY)*0.8?"x":"y";
+    }
+    if(axis!=="x") return false;
+
+    dx=moveX;
+    const rotate=Math.max(-14,Math.min(14,dx/14));
+    card.style.transform=`translate3d(${dx}px,0,0) rotate(${rotate}deg)`;
+    const strength=Math.min(1,Math.abs(dx)/90);
+    if(dx>0){
+      if(likeStamp) likeStamp.style.opacity=String(strength);
+      if(passStamp) passStamp.style.opacity="0";
+    }else{
+      if(passStamp) passStamp.style.opacity=String(strength);
+      if(likeStamp) likeStamp.style.opacity="0";
+    }
+    return true;
+  };
+
+  const reset=()=>{
+    card.style.transition="transform .22s ease, opacity .22s ease";
+    card.style.transform="translate3d(0,0,0) rotate(0deg)";
+    card.style.opacity="1";
+    if(likeStamp) likeStamp.style.opacity="0";
+    if(passStamp) passStamp.style.opacity="0";
+  };
+
+  const finish=()=>{
+    if(!active) return;
+    active=false;
+    if(axis==="x" && Math.abs(dx)>=55){
+      swipeChoice(dx>0);
+    }else{
+      reset();
+    }
+  };
+
+  // iPhone / iPad: explicit touch events are more reliable than pointer events.
+  card.addEventListener("touchstart",e=>{
+    if(e.target.closest("button") || e.touches.length!==1) return;
+    const t=e.touches[0];
+    start(t.clientX,t.clientY);
+  },{passive:true});
+
+  card.addEventListener("touchmove",e=>{
+    if(!active || e.touches.length!==1) return;
+    const t=e.touches[0];
+    if(move(t.clientX,t.clientY)) e.preventDefault();
+  },{passive:false});
+
+  card.addEventListener("touchend",finish,{passive:true});
+  card.addEventListener("touchcancel",()=>{active=false;reset();},{passive:true});
+
+  // Desktop / trackpad fallback.
+  card.addEventListener("mousedown",e=>{
+    if(e.target.closest("button")) return;
+    e.preventDefault();
+    start(e.clientX,e.clientY);
+  });
+  window.addEventListener("mousemove",e=>{
+    if(active) move(e.clientX,e.clientY);
+  });
+  window.addEventListener("mouseup",()=>{
+    if(active) finish();
+  });
+}
+
+function swipeChoice(yes){
+  if(swipeAnimating) return;
+  const card=document.getElementById("swipeCard");
+  if(!card){vote(yes);return;}
+
+  swipeAnimating=true;
+  const direction=yes?1:-1;
+  card.style.transition="transform .2s ease-out, opacity .2s ease-out";
+  card.style.transform=`translateX(${direction*Math.max(window.innerWidth,500)}px) rotate(${direction*16}deg)`;
+  card.style.opacity="0";
+  setTimeout(()=>{
+    swipeAnimating=false;
+    vote(yes);
+  },190);
+}
+
+function vote(yes){
+  if(yes)likes.push(filteredDestinations[idx].name);
+  idx++;
+  swipe();
+}
+
+async function submitVotes(){
+  try{
+    await ensureUser();
+
+    app().innerHTML=`<div class="card"><h2>Saving your swipes…</h2><p class="muted">Checking for a group match.</p></div>`;
+
+    const {error:deleteError}=await db.from(VOTE_TABLE)
+      .delete()
+      .eq("trip_code",trip.code)
+      .eq("user_id",currentUser.id);
+
+    if(deleteError) throw deleteError;
+
+    if(likes.length){
+      const rows=likes.map(destination=>({
+        trip_code:trip.code,
+        member_name:travelerName,
+        destination,
+        user_id:currentUser.id
+      }));
+
+      const {error}=await db.from(VOTE_TABLE).insert(rows);
+      if(error) throw error;
+    }
+
+    resultsRefreshAttempts=0;
+    await new Promise(r=>setTimeout(r,700));
+    await results();
+  }catch(err){
+    alert("Could not save votes: "+err.message);
+  }
+}
+
+let resultsRefreshTimer=null;
+let resultsRefreshAttempts=0;
+
+function scheduleResultsRefresh(){
+  clearTimeout(resultsRefreshTimer);
+  if(resultsRefreshAttempts>=6) return;
+  resultsRefreshAttempts++;
+  resultsRefreshTimer=setTimeout(()=>results({silent:true,auto:true}),2000);
+}
+
+async function results(options={}){
+  if(!options.silent) app().innerHTML=`<div class="card match"><div class="big">🔎</div><h2>Checking group results…</h2><p class="muted">Looking for shared destinations.</p></div>`;
+
+  const [memberRes,voteRes]=await Promise.all([
+    db.from(MEMBER_TABLE).select("*").eq("trip_code",trip.code),
+    db.from(VOTE_TABLE).select("*").eq("trip_code",trip.code)
+  ]);
+
+  if(memberRes.error||voteRes.error){
+    alert("Could not load results.");
+    return;
+  }
+
+  const rawMembers=memberRes.data||[];
+  const votes=voteRes.data||[];
+
+  // One traveler per anonymous user ID. Older rows without IDs fall back to their name.
+  const memberMap=new Map();
+  rawMembers.forEach(m=>{
+    const key=m.user_id||`name:${m.name}`;
+    if(!memberMap.has(key)) memberMap.set(key,m);
+  });
+  const members=[...memberMap.values()];
+  const names=members.map(x=>x.name);
+  const memberCount=members.length;
+
+  const counts={};
+  const voters=new Set();
+  votes.forEach(v=>{
+    const voter=v.user_id||`name:${v.member_name}`;
+    voters.add(voter);
+    if(!counts[v.destination]) counts[v.destination]=new Set();
+    counts[v.destination].add(voter);
+  });
+
+  const ranking=Object.entries(counts)
+    .map(([destination,set])=>({destination,count:set.size}))
+    .sort((a,b)=>b.count-a.count || a.destination.localeCompare(b.destination));
+
+  const matches=ranking.filter(x=>memberCount>1&&x.count===memberCount);
+  const status=`${Math.min(voters.size,memberCount)} of ${memberCount} traveler${memberCount===1?"":"s"} have liked at least one destination.`;
+
+  if(matches.length){
+    const primary=DESTINATIONS.find(x=>x.name===matches[0].destination)||{emoji:"✈️",name:matches[0].destination};
+    const allMatches=matches.map(m=>{
+      const d=DESTINATIONS.find(x=>x.name===m.destination)||{emoji:"✈️",name:m.destination,country:""};
+      return `<div class="matchitem"><div class="place">${d.emoji} ${esc(d.name)}</div><div class="resultmeta">Everyone matched${d.country?` · ${esc(d.country)}`:""}</div></div>`;
+    }).join("");
+
+    app().innerHTML=`
+    <div class="card match">
+      <div class="big">🎉</div>
+      <div class="eyebrow">It's a TripMatch</div>
+      <h1>${primary.emoji} ${esc(primary.name)}</h1>
+      <p class="muted">Everyone in the group liked this destination.</p>
+      <div class="people">${names.map(n=>`<span class="person">✓ ${esc(n)}</span>`).join("")}</div>
+      ${matches.length>1?`<div class="summary"><b>You have ${matches.length} matches</b><span class="muted">Here are all the places everyone liked.</span></div><div class="matchlist">${allMatches}</div>`:""}
+      <div class="statusline">${esc(status)}</div>
+      <button class="primary" onclick="shareInvite()">Share trip</button>
+      <button class="secondary" style="margin-top:10px" onclick="resultsRefreshAttempts=0;results()">Refresh results</button>
+      <button class="secondary" style="margin-top:10px" onclick="showDashboard()">Trip dashboard</button>
+       <button class="secondary" style="margin-top:10px" onclick="restartSwipes()">Swipe again</button>
+    </div>`;
+    if(options.auto || resultsRefreshAttempts===0) scheduleResultsRefresh();
+  }else{
+    const near=ranking.slice(0,3).map(r=>{
+      const d=DESTINATIONS.find(x=>x.name===r.destination)||{emoji:"✈️",name:r.destination};
+      return `<div class="resultitem"><div><strong>${d.emoji} ${esc(d.name)}</strong><div class="resultmeta">Liked by ${r.count} of ${memberCount}</div></div><span class="person">${r.count}/${memberCount}</span></div>`;
+    }).join("");
+
+    app().innerHTML=`
+    <div class="card match">
+      <div class="big">✈️</div>
+      <h2>${memberCount<2?"Your swipes are in!":"No full-group match yet"}</h2>
+      <p class="muted">${memberCount<2
+        ?"Invite someone else. A match appears when at least two travelers like the same destination."
+        :"Someone may still need to finish swiping, or the group chose different places."}</p>
+      <div class="people">${names.map(n=>`<span class="person">${esc(n)}</span>`).join("")}</div>
+      <div class="statusline">${esc(status)}</div>
+      ${near?`<div class="summary"><b>Closest group picks</b><span class="muted">These are the destinations with the most likes so far.</span></div><div class="resultgrid">${near}</div>`:""}
+      <button class="primary" onclick="shareInvite()">Share invite</button>
+      <button class="secondary" style="margin-top:10px" onclick="resultsRefreshAttempts=0;results()">Refresh results</button>
+       <button class="secondary" style="margin-top:10px" onclick="showDashboard()">Trip dashboard</button>
+    </div>`;
+    if(options.auto || resultsRefreshAttempts===0) scheduleResultsRefresh();
+  }
+}
+
+function restartSwipes(){idx=0;likes=[];swipe();}
+
+const APP_VERSION="10";
+try{
+  const seen=sessionStorage.getItem("tripmatch_app_version");
+  if(seen!==APP_VERSION){
+    sessionStorage.setItem("tripmatch_app_version",APP_VERSION);
+    if(seen) location.reload();
+  }
+}catch(e){}
+
+async function boot(){
+  app().innerHTML=`<div class="card"><h2>Starting TripMatch…</h2><p class="muted">Creating your anonymous session.</p></div>`;
+  try{
+    await ensureUser();
+    const params=new URLSearchParams(location.search);
+    const codeFromLink=params.get("trip");
+    codeFromLink?inviteLanding(codeFromLink):home();
+  }catch(err){
+    app().innerHTML=`<div class="card"><h2>Could not start TripMatch</h2><p class="muted">${esc(err.message)}</p></div>`;
+  }
+}
+
+boot();
+</script>
+</body>
+</html>
