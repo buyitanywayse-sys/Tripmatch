@@ -1,86 +1,292 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#ff5a5f" />
-  <title>TripMatch — Find your group trip</title>
-  <link rel="preconnect" href="https://images.unsplash.com">
-  <style>
-    *{box-sizing:border-box} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#17212b;background:#fffaf7}
-    button,input,select{font:inherit}.wrap{max-width:1080px;margin:auto;padding:0 22px}.nav{height:74px;display:flex;align-items:center;justify-content:space-between}
-    .brand{font-weight:900;font-size:24px;letter-spacing:-1px}.brand span{color:#ff5a5f}.pill{border:1px solid #eadfd9;background:white;border-radius:999px;padding:10px 16px}
-    .hero{display:grid;grid-template-columns:1.05fr .95fr;gap:46px;align-items:center;padding:55px 0 70px}.eyebrow{color:#ff5a5f;font-weight:800;text-transform:uppercase;font-size:13px;letter-spacing:1.3px}
-    h1{font-size:64px;line-height:.98;letter-spacing:-3.5px;margin:14px 0 20px;max-width:700px}.sub{font-size:19px;line-height:1.55;color:#5b6670;max-width:570px}
-    .primary{border:0;background:#ff5a5f;color:white;font-weight:800;border-radius:16px;padding:16px 23px;cursor:pointer;box-shadow:0 10px 25px #ff5a5f33}
-    .heroimg{height:520px;border-radius:32px;background:url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=85') center/cover;box-shadow:0 25px 60px #24303a22;position:relative}
-    .float{position:absolute;left:24px;right:24px;bottom:24px;background:#fffffff0;backdrop-filter:blur(12px);border-radius:22px;padding:18px;display:flex;justify-content:space-between;align-items:center}
-    .float b{font-size:18px}.muted{color:#6b747c;font-size:14px}.section{padding:65px 0}.section h2{text-align:center;font-size:38px;letter-spacing:-1.8px;margin:0 0 12px}.center{text-align:center;color:#6b747c}
-    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:34px}.step{background:white;border:1px solid #eee3dd;border-radius:24px;padding:25px}.num{width:38px;height:38px;border-radius:12px;background:#fff0ed;color:#ff5a5f;display:grid;place-items:center;font-weight:900}
-    .app{display:none;min-height:100vh;background:#fffaf7}.apphead{padding:20px 0;display:flex;align-items:center;justify-content:space-between}.panel{max-width:620px;margin:40px auto;background:white;border:1px solid #eee3dd;border-radius:28px;padding:28px;box-shadow:0 20px 60px #3a2b2420}
-    .panel h2{text-align:left;font-size:32px;margin:0 0 8px}.field{margin:18px 0}.field label{display:block;font-weight:750;margin-bottom:8px}.field input,.field select{width:100%;padding:14px;border:1px solid #ddd2cc;border-radius:13px;background:white}
-    .tags{display:flex;flex-wrap:wrap;gap:9px}.tag{border:1px solid #ddd2cc;background:white;border-radius:999px;padding:10px 13px;cursor:pointer}.tag.on{background:#17212b;color:white;border-color:#17212b}
-    .dest{overflow:hidden;padding:0}.destimg{height:360px;background-size:cover;background-position:center}.destbody{padding:24px}.desttop{display:flex;justify-content:space-between;gap:20px}.dest h2{margin:0;font-size:34px}.badges{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}.badge{background:#f6f1ee;border-radius:999px;padding:8px 11px;font-size:13px}
-    .actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}.pass{border:1px solid #ddd2cc;background:white;border-radius:15px;padding:15px;font-weight:800}.like{border:0;background:#ff5a5f;color:white;border-radius:15px;padding:15px;font-weight:800}
-    .match{text-align:center;padding:44px 25px}.match .big{font-size:64px}.share{background:#17212b;color:white;border:0;border-radius:15px;padding:14px 18px;font-weight:800}.tiny{text-align:center;color:#8b9298;font-size:12px;margin:28px 0}
-    @media(max-width:760px){.hero{grid-template-columns:1fr;padding-top:28px}.heroimg{height:390px}h1{font-size:48px}.steps{grid-template-columns:1fr}.nav .pill{display:none}.section{padding:45px 0}}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#fffaf7">
+<title>TripMatch</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg:#fffaf7;--card:#fff;--ink:#17212b;--muted:#69737c;--line:#eee1da;--accent:#ff5961}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select{font:inherit} button{cursor:pointer}
+.wrap{max-width:760px;margin:auto;padding:20px}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:8px 0 20px}
+.brand{font-size:25px;font-weight:950;letter-spacing:-1.1px} .brand span{color:var(--accent)}
+.navbtn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 13px;font-weight:750}
+.card{background:#fff;border:1px solid var(--line);border-radius:28px;padding:25px;box-shadow:0 18px 55px #2b201b12;margin:16px 0}
+.eyebrow{font-size:12px;letter-spacing:1.35px;text-transform:uppercase;font-weight:900;color:var(--accent)}
+h1{font-size:44px;line-height:1;letter-spacing:-2.7px;margin:12px 0 16px}
+h2{font-size:30px;line-height:1.05;letter-spacing:-1.5px;margin:8px 0 12px}
+.muted{color:var(--muted);line-height:1.55}
+.primary,.secondary{width:100%;padding:15px 16px;border-radius:15px;font-weight:900}
+.primary{border:0;background:var(--accent);color:white;box-shadow:0 10px 25px #ff59612c}
+.secondary{border:1px solid #ddd0c9;background:#fff;color:var(--ink)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{margin:17px 0} .field label{display:block;font-weight:800;margin-bottom:8px}
+.field input,.field select{width:100%;border:1px solid #ddd0c9;border-radius:14px;padding:14px;background:#fff;color:var(--ink)}
+.hero{height:290px;border-radius:22px;background-size:cover;background-position:center;margin:-25px -25px 22px}
+.badges{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}
+.badge,.person{font-size:13px;padding:8px 10px;border-radius:999px;background:#f5efec}
+.progress{height:6px;background:#eee5e0;border-radius:99px;overflow:hidden;margin:15px 0}
+.progress i{display:block;height:100%;background:var(--accent)}
+.people{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:15px 0}
+.match{text-align:center} .big{font-size:58px}
+.linkbox{word-break:break-all;background:#f7f3f1;border-radius:14px;padding:13px;font-size:13px;margin:12px 0}
+.notice{padding:13px;border-radius:14px;background:#fff1ee;color:#8f3d43;font-size:13px;line-height:1.45;margin:14px 0}
+.tiny{font-size:12px;color:#8b9298;text-align:center;margin:24px 0}
+.desttitle{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+@media(max-width:560px){h1{font-size:40px}.wrap{padding:18px}.row{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
-<div id="landing">
-  <div class="wrap">
-    <nav class="nav"><div class="brand">Trip<span>Match</span></div><button class="pill" onclick="start()">Try the demo</button></nav>
-    <main class="hero">
-      <div>
-        <div class="eyebrow">Group travel, without the group chat chaos</div>
-        <h1>Same group. Finally, the same destination.</h1>
-        <p class="sub">Tell TripMatch what everyone wants, swipe on destinations, and discover the places your whole group actually agrees on.</p>
-        <button class="primary" onclick="start()">Start matching →</button>
-      </div>
-      <div class="heroimg"><div class="float"><div><b>✨ It's a match</b><div class="muted">Mallorca · 4/4 travelers</div></div><div style="font-size:34px">🏝️</div></div></div>
-    </main>
-    <section class="section">
-      <h2>One trip. Everyone gets a say.</h2><p class="center">A simple way to turn “where should we go?” into an actual plan.</p>
-      <div class="steps">
-        <div class="step"><div class="num">1</div><h3>Set the vibe</h3><p class="muted">Choose your budget, dates, departure city and travel style.</p></div>
-        <div class="step"><div class="num">2</div><h3>Swipe separately</h3><p class="muted">Everyone likes or passes on destination ideas without pressure.</p></div>
-        <div class="step"><div class="num">3</div><h3>Match together</h3><p class="muted">When everyone likes the same destination, you've got your trip.</p></div>
-      </div>
-    </section>
+<div class="wrap">
+  <div class="nav">
+    <div class="brand">Trip<span>Match</span></div>
+    <button class="navbtn" onclick="goHome()">Home</button>
   </div>
+  <div id="app"></div>
 </div>
 
-<div id="app" class="app">
-  <div class="wrap"><div class="apphead"><div class="brand">Trip<span>Match</span></div><button class="pill" onclick="home()">← Home</button></div></div>
-  <div id="screen"></div>
-</div>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const destinations=[
- {name:"Mallorca",country:"Spain",emoji:"🇪🇸",price:"€€",flight:"Short-haul",vibes:["Beach","Food","Nightlife"],img:"https://images.unsplash.com/photo-1530789253388-582c481c54b0?auto=format&fit=crop&w=1200&q=85"},
- {name:"Lisbon",country:"Portugal",emoji:"🇵🇹",price:"€€",flight:"City break",vibes:["Food","Culture","Nightlife"],img:"https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=1200&q=85"},
- {name:"Sicily",country:"Italy",emoji:"🇮🇹",price:"€€",flight:"Mediterranean",vibes:["Beach","Food","Culture"],img:"https://images.unsplash.com/photo-1529260830199-42c24126f198?auto=format&fit=crop&w=1200&q=85"},
- {name:"Santorini",country:"Greece",emoji:"🇬🇷",price:"€€€",flight:"Island escape",vibes:["Beach","Romance","Views"],img:"https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=1200&q=85"},
- {name:"Split",country:"Croatia",emoji:"🇭🇷",price:"€€",flight:"Coastal break",vibes:["Beach","Food","Adventure"],img:"https://images.unsplash.com/photo-1555990538-1e6cdae1cd3d?auto=format&fit=crop&w=1200&q=85"}
+const SUPABASE_URL = "https://grjeliceompgijgcsrvt.supabase.co";
+const SUPABASE_KEY = "sb_publishable_6sKOKMtEAqOWlo6y8PoTEA_VGoFtSUX";
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const TRIP_TABLE = "TripMatch";
+const MEMBER_TABLE = "members";
+const VOTE_TABLE = "votes";
+
+const DESTINATIONS = [
+  {name:"Mallorca",country:"Spain",emoji:"🇪🇸",vibes:["Beach","Food","Nightlife"],img:"https://images.unsplash.com/photo-1530789253388-582c481c54b0?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Lisbon",country:"Portugal",emoji:"🇵🇹",vibes:["Food","Culture","Nightlife"],img:"https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Sicily",country:"Italy",emoji:"🇮🇹",vibes:["Beach","Food","Culture"],img:"https://images.unsplash.com/photo-1529260830199-42c24126f198?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Santorini",country:"Greece",emoji:"🇬🇷",vibes:["Beach","Romance","Views"],img:"https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=1200&q=85"},
+  {name:"Split",country:"Croatia",emoji:"🇭🇷",vibes:["Beach","Food","Adventure"],img:"https://images.unsplash.com/photo-1555990538-1e6cdae1cd3d?auto=format&fit=crop&w=1200&q=85"}
 ];
-let prefs={vibes:[]},i=0,liked=[];
-function start(){document.getElementById("landing").style.display="none";document.getElementById("app").style.display="block";form()}
-function home(){document.getElementById("app").style.display="none";document.getElementById("landing").style.display="block"}
-function form(){
- document.getElementById("screen").innerHTML=`<div class="panel"><div class="eyebrow">Create a trip</div><h2>What are we looking for?</h2><p class="muted">This demo uses a curated destination set. Live prices and group invites come next.</p>
- <div class="field"><label>Trip name</label><input id="trip" placeholder="Summer escape"></div>
- <div class="field"><label>Flying from</label><input id="from" placeholder="e.g. Copenhagen"></div>
- <div class="field"><label>Budget per person</label><select id="budget"><option>Under €500</option><option selected>€500–€1,000</option><option>€1,000–€1,500</option><option>€1,500+</option></select></div>
- <div class="field"><label>What sounds good?</label><div class="tags">${["Beach","Food","Nightlife","Culture","Adventure","Romance"].map(x=>`<button class="tag" onclick="toggle(this,'${x}')">${x}</button>`).join("")}</div></div>
- <button class="primary" style="width:100%;margin-top:10px" onclick="begin()">Show me destinations →</button></div>`}
-function toggle(el,x){el.classList.toggle("on");prefs.vibes.includes(x)?prefs.vibes=prefs.vibes.filter(v=>v!==x):prefs.vibes.push(x)}
-function begin(){prefs.trip=document.getElementById("trip").value||"Our trip";prefs.from=document.getElementById("from").value||"your city";prefs.budget=document.getElementById("budget").value;i=0;liked=[];card()}
-function card(){
- if(i>=destinations.length){finish();return}
- const d=destinations[i];document.getElementById("screen").innerHTML=`<div class="panel dest"><div class="destimg" style="background-image:url('${d.img}')"></div><div class="destbody"><div class="desttop"><div><div class="muted">${d.emoji} ${d.country}</div><h2>${d.name}</h2></div><b>${i+1}/${destinations.length}</b></div><div class="badges"><span class="badge">${d.price}</span><span class="badge">✈️ ${d.flight}</span>${d.vibes.map(v=>`<span class="badge">${v}</span>`).join("")}</div><p class="muted">Does ${d.name} fit the vibe for <b>${prefs.trip}</b>?</p><div class="actions"><button class="pass" onclick="vote(false)">✕ Pass</button><button class="like" onclick="vote(true)">♥ Like</button></div></div></div>`}
-function vote(yes){if(yes)liked.push(destinations[i]);i++;card()}
-function finish(){
- const d=liked[0]||destinations[0];document.getElementById("screen").innerHTML=`<div class="panel match"><div class="big">🎉</div><div class="eyebrow">Demo complete</div><h2>${liked.length?"You found a favorite!":"Ready for another round?"}</h2><p class="sub" style="margin:10px auto 24px">${liked.length?`${d.name} is on your shortlist. In the full group version, a match appears when everyone likes the same place.`:"You passed on every destination. Change your preferences and try again."}</p>${liked.length?`<div class="destimg" style="height:250px;border-radius:20px;background-image:url('${d.img}')"></div><h2 style="text-align:center;margin-top:18px">${d.emoji} ${d.name}</h2>`:""}<button class="primary" onclick="form()">Start another trip</button></div><div class="tiny">TripMatch prototype · No booking or live pricing yet</div>`}
+
+let trip = null;
+let travelerName = "";
+let idx = 0;
+let likes = [];
+
+const app = () => document.getElementById("app");
+const esc = (s="") => String(s).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[ch]));
+
+function goHome(){
+  history.replaceState({}, "", location.pathname);
+  trip=null; travelerName=""; idx=0; likes=[];
+  home();
+}
+
+function home(){
+  app().innerHTML = `
+  <div class="card">
+    <div class="eyebrow">Group travel without the group chat chaos</div>
+    <h1>Find the destination everyone wants.</h1>
+    <p class="muted">Create a trip, share one link, swipe separately, and reveal the destinations your whole group agrees on.</p>
+    <button class="primary" onclick="createForm()">Create a trip →</button>
+  </div>
+  <div class="tiny">TripMatch V2 · Group matching prototype</div>`;
+}
+
+function createForm(){
+  app().innerHTML = `
+  <div class="card">
+    <div class="eyebrow">Create a trip</div>
+    <h2>Start your group</h2>
+    <div class="field"><label>Trip name</label><input id="tripTitle" maxlength="50" placeholder="Summer escape"></div>
+    <div class="field"><label>Your name</label><input id="ownerName" maxlength="50" placeholder="Frida"></div>
+    <div class="field"><label>Flying from</label><input id="origin" maxlength="50" placeholder="Copenhagen"></div>
+    <div class="field"><label>Budget per person</label>
+      <select id="budget">
+        <option>Under €500</option>
+        <option selected>€500–€1,000</option>
+        <option>€1,000–€1,500</option>
+        <option>€1,500+</option>
+      </select>
+    </div>
+    <button class="primary" onclick="createTrip()">Create TripMatch →</button>
+  </div>`;
+}
+
+async function createTrip(){
+  const title=document.getElementById("tripTitle").value.trim();
+  const owner=document.getElementById("ownerName").value.trim();
+  const origin=document.getElementById("origin").value.trim();
+  const budget=document.getElementById("budget").value;
+  if(!title||!owner){alert("Add a trip name and your name.");return;}
+
+  const code=Math.random().toString(36).slice(2,8).toUpperCase();
+  const {data,error}=await db.from(TRIP_TABLE)
+    .insert({code,title,owner,origin:origin||null,budget})
+    .select()
+    .single();
+
+  if(error){alert("Could not create trip: "+error.message);return;}
+  trip=data;
+  travelerName=owner;
+  showInvite();
+}
+
+function inviteUrl(){
+  return location.origin+location.pathname+"?trip="+encodeURIComponent(trip.code);
+}
+
+function showInvite(){
+  const url=inviteUrl();
+  app().innerHTML=`
+  <div class="card">
+    <div class="eyebrow">Trip created</div>
+    <h2>${esc(trip.title)}</h2>
+    <p class="muted">Send this link to everyone coming. Each person swipes privately on their own phone.</p>
+    <div class="linkbox">${esc(url)}</div>
+    <div class="row">
+      <button class="secondary" onclick="shareInvite()">Share invite</button>
+      <button class="primary" onclick="joinTrip('${esc(trip.code)}','${esc(travelerName)}')">Start my swipes</button>
+    </div>
+  </div>`;
+}
+
+async function shareInvite(){
+  const url=inviteUrl();
+  if(navigator.share){
+    try{await navigator.share({title:"Join my TripMatch",text:"Swipe destinations with me on TripMatch",url});return;}catch(e){}
+  }
+  try{await navigator.clipboard.writeText(url);alert("Invite link copied!");}
+  catch(e){prompt("Copy this link:",url);}
+}
+
+async function loadTrip(code){
+  app().innerHTML=`<div class="card"><h2>Opening your trip…</h2><p class="muted">One second.</p></div>`;
+  const {data,error}=await db.from(TRIP_TABLE).select("*").eq("code",code).maybeSingle();
+  if(error||!data){
+    app().innerHTML=`<div class="card"><h2>Trip not found</h2><p class="muted">This invite link may be incorrect.</p><button class="secondary" onclick="goHome()">Back home</button></div>`;
+    return;
+  }
+  trip=data;
+  joinForm();
+}
+
+function joinForm(){
+  app().innerHTML=`
+  <div class="card">
+    <div class="eyebrow">You've been invited</div>
+    <h2>${esc(trip.title)}</h2>
+    <p class="muted">Created by ${esc(trip.owner)}${trip.origin ? " · Flying from "+esc(trip.origin) : ""}${trip.budget ? " · "+esc(trip.budget) : ""}</p>
+    <div class="field"><label>Your name</label><input id="joinName" maxlength="50" placeholder="Your name"></div>
+    <button class="primary" onclick="joinTrip('${esc(trip.code)}')">Join & start swiping →</button>
+  </div>`;
+}
+
+async function joinTrip(code,presetName=""){
+  travelerName=presetName||(document.getElementById("joinName")?.value.trim()||"");
+  if(!travelerName){alert("Add your name.");return;}
+
+  const {data:existing,error:checkError}=await db.from(MEMBER_TABLE)
+    .select("*").eq("trip_code",code).eq("name",travelerName).limit(1);
+
+  if(checkError){alert("Could not join trip: "+checkError.message);return;}
+  if(!existing||existing.length===0){
+    const {error}=await db.from(MEMBER_TABLE).insert({trip_code:code,name:travelerName});
+    if(error){alert("Could not join trip: "+error.message);return;}
+  }
+
+  idx=0; likes=[];
+  swipe();
+}
+
+function swipe(){
+  if(idx>=DESTINATIONS.length){submitVotes();return;}
+  const d=DESTINATIONS[idx];
+  app().innerHTML=`
+  <div class="card">
+    <div class="hero" style="background-image:url('${d.img}')"></div>
+    <div class="desttitle">
+      <div><div class="eyebrow">${d.emoji} ${d.country}</div><h2>${d.name}</h2></div>
+      <b>${idx+1}/${DESTINATIONS.length}</b>
+    </div>
+    <div class="badges">${d.vibes.map(v=>`<span class="badge">${v}</span>`).join("")}</div>
+    <div class="progress"><i style="width:${((idx+1)/DESTINATIONS.length)*100}%"></i></div>
+    <p class="muted">Swipe as <b>${esc(travelerName)}</b>.</p>
+    <div class="row">
+      <button class="secondary" onclick="vote(false)">✕ Pass</button>
+      <button class="primary" onclick="vote(true)">♥ Like</button>
+    </div>
+  </div>`;
+}
+
+function vote(yes){
+  if(yes)likes.push(DESTINATIONS[idx].name);
+  idx++;
+  swipe();
+}
+
+async function submitVotes(){
+  app().innerHTML=`<div class="card"><h2>Saving your swipes…</h2><p class="muted">Checking for a group match.</p></div>`;
+
+  const {error:deleteError}=await db.from(VOTE_TABLE)
+    .delete().eq("trip_code",trip.code).eq("member_name",travelerName);
+  if(deleteError){alert("Could not save votes: "+deleteError.message);return;}
+
+  if(likes.length){
+    const rows=likes.map(destination=>({trip_code:trip.code,member_name:travelerName,destination}));
+    const {error}=await db.from(VOTE_TABLE).insert(rows);
+    if(error){alert("Could not save votes: "+error.message);return;}
+  }
+  results();
+}
+
+async function results(){
+  const [memberRes,voteRes]=await Promise.all([
+    db.from(MEMBER_TABLE).select("*").eq("trip_code",trip.code),
+    db.from(VOTE_TABLE).select("*").eq("trip_code",trip.code)
+  ]);
+  if(memberRes.error||voteRes.error){alert("Could not load results.");return;}
+
+  const names=[...new Set((memberRes.data||[]).map(x=>x.name))];
+  const counts={};
+  (voteRes.data||[]).forEach(v=>{
+    if(!counts[v.destination])counts[v.destination]=new Set();
+    counts[v.destination].add(v.member_name);
+  });
+  const matches=Object.entries(counts)
+    .filter(([_,set])=>names.length>1&&set.size===names.length)
+    .map(([destination])=>destination);
+
+  if(matches.length){
+    const d=DESTINATIONS.find(x=>x.name===matches[0])||{emoji:"✈️",name:matches[0]};
+    app().innerHTML=`
+    <div class="card match">
+      <div class="big">🎉</div>
+      <div class="eyebrow">It's a TripMatch</div>
+      <h1>${d.emoji} ${d.name}</h1>
+      <p class="muted">Everyone in the group liked this destination.</p>
+      <div class="people">${names.map(n=>`<span class="person">✓ ${esc(n)}</span>`).join("")}</div>
+      <button class="primary" onclick="shareInvite()">Share trip</button>
+      <button class="secondary" style="margin-top:10px" onclick="restartSwipes()">Swipe again</button>
+    </div>`;
+  } else {
+    app().innerHTML=`
+    <div class="card match">
+      <div class="big">✈️</div>
+      <h2>Your swipes are in!</h2>
+      <p class="muted">${names.length<2
+        ?"Now invite someone else. A match appears when at least two travelers have swiped and liked the same destination."
+        :"No full-group match yet. Someone may still need to finish swiping, or your group chose different places."}</p>
+      <div class="people">${names.map(n=>`<span class="person">${esc(n)}</span>`).join("")}</div>
+      <button class="primary" onclick="shareInvite()">Share invite</button>
+      <button class="secondary" style="margin-top:10px" onclick="results()">Refresh results</button>
+    </div>`;
+  }
+}
+
+function restartSwipes(){idx=0;likes=[];swipe();}
+
+const params=new URLSearchParams(location.search);
+const codeFromLink=params.get("trip");
+codeFromLink?loadTrip(codeFromLink):home();
 </script>
 </body>
 </html>
