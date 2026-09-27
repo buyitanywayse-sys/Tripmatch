@@ -52,6 +52,12 @@ h2{font-size:30px;line-height:1.05;letter-spacing:-1.5px;margin:8px 0 12px}
 .memberrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #f1e8e3}.memberrow:last-child{border-bottom:0}
 .membername{font-weight:850}.done{color:#26734d;background:#edf8f1}.waiting{color:#8a5a20;background:#fff5e7}.statuspill{font-size:11px;font-weight:850;padding:7px 9px;border-radius:999px;white-space:nowrap}
 .dashboard-actions{display:grid;gap:9px;margin-top:18px}.emptybox{padding:14px;border-radius:16px;background:#faf6f3;color:var(--muted);font-size:13px;line-height:1.45}
+
+.swipecard{position:relative;touch-action:pan-y;user-select:none;-webkit-user-select:none;transform-origin:50% 92%;will-change:transform,opacity}
+.swipe-stamp{position:absolute;top:38px;z-index:5;padding:7px 12px;border:3px solid currentColor;border-radius:12px;font-size:25px;font-weight:950;letter-spacing:1.5px;opacity:0;pointer-events:none;background:#ffffffdf}
+.swipe-like{right:28px;color:#238653;transform:rotate(10deg)}
+.swipe-pass{left:28px;color:#c44950;transform:rotate(-10deg)}
+.swipehint{text-align:center;font-size:12px;color:#8b9298;margin:12px 0 0}
 @media(max-width:560px){h1{font-size:40px}.wrap{padding:18px}.row{grid-template-columns:1fr}}
 </style>
 </head>
@@ -125,7 +131,7 @@ function home(){
     <p class="muted">Set dates, budget and travel vibe first. TripMatch narrows the options before everyone swipes.</p>
     <button class="primary" onclick="createForm()">Create a trip →</button>
   </div>
-  <div class="tiny">TripMatch V7 · Trip dashboard</div>`;
+  <div class="tiny">TripMatch V8 · Real swipe gestures</div>`;
 }
 
 function createForm(){
@@ -369,11 +375,15 @@ async function showDashboard(){
   </div>`;
 }
 
+let swipeAnimating=false;
+
 function swipe(){
   if(idx>=filteredDestinations.length){submitVotes();return;}
   const d=filteredDestinations[idx];
   app().innerHTML=`
-  <div class="card">
+  <div class="card swipecard" id="swipeCard">
+    <div class="swipe-stamp swipe-pass" id="passStamp">PASS</div>
+    <div class="swipe-stamp swipe-like" id="likeStamp">LIKE</div>
     <div class="hero" style="background-image:url('${d.img}')"></div>
     <div class="desttitle">
       <div><div class="eyebrow">${d.emoji} ${d.country}</div><h2>${d.name}</h2></div>
@@ -383,10 +393,87 @@ function swipe(){
     <div class="progress"><i style="width:${((idx+1)/filteredDestinations.length)*100}%"></i></div>
     <p class="muted">Swipe as <b>${esc(travelerName)}</b>.</p>
     <div class="row">
-      <button class="secondary" onclick="vote(false)">✕ Pass</button>
-      <button class="primary" onclick="vote(true)">♥ Like</button>
+      <button class="secondary" onclick="swipeChoice(false)">✕ Pass</button>
+      <button class="primary" onclick="swipeChoice(true)">♥ Like</button>
     </div>
+    <div class="swipehint">Swipe left to pass · Swipe right to like</div>
   </div>`;
+  bindSwipeGesture();
+}
+
+function bindSwipeGesture(){
+  const card=document.getElementById("swipeCard");
+  const likeStamp=document.getElementById("likeStamp");
+  const passStamp=document.getElementById("passStamp");
+  if(!card) return;
+
+  let active=false,startX=0,startY=0,dx=0,axis=null;
+
+  const clearVisuals=()=>{
+    card.style.transition="transform .22s ease, opacity .22s ease";
+    card.style.transform="translateX(0) rotate(0deg)";
+    card.style.opacity="1";
+    if(likeStamp) likeStamp.style.opacity="0";
+    if(passStamp) passStamp.style.opacity="0";
+  };
+
+  card.addEventListener("pointerdown",e=>{
+    if(swipeAnimating || e.target.closest("button")) return;
+    active=true; startX=e.clientX; startY=e.clientY; dx=0; axis=null;
+    card.style.transition="none";
+    try{card.setPointerCapture(e.pointerId)}catch(_){ }
+  });
+
+  card.addEventListener("pointermove",e=>{
+    if(!active || swipeAnimating) return;
+    const moveX=e.clientX-startX;
+    const moveY=e.clientY-startY;
+    if(!axis && (Math.abs(moveX)>6 || Math.abs(moveY)>6)){
+      axis=Math.abs(moveX)>Math.abs(moveY)?"x":"y";
+    }
+    if(axis!=="x") return;
+
+    dx=moveX;
+    const rotate=Math.max(-12,Math.min(12,dx/16));
+    card.style.transform=`translateX(${dx}px) rotate(${rotate}deg)`;
+    const strength=Math.min(1,Math.abs(dx)/110);
+    if(dx>0){
+      if(likeStamp) likeStamp.style.opacity=String(strength);
+      if(passStamp) passStamp.style.opacity="0";
+    }else{
+      if(passStamp) passStamp.style.opacity=String(strength);
+      if(likeStamp) likeStamp.style.opacity="0";
+    }
+  });
+
+  const finish=()=>{
+    if(!active) return;
+    active=false;
+    if(axis==="x" && Math.abs(dx)>=80){
+      swipeChoice(dx>0);
+    }else{
+      clearVisuals();
+    }
+  };
+
+  card.addEventListener("pointerup",finish);
+  card.addEventListener("pointercancel",()=>{active=false;clearVisuals();});
+}
+
+function swipeChoice(yes){
+  if(swipeAnimating) return;
+  const card=document.getElementById("swipeCard");
+  if(!card){vote(yes);return;}
+
+  swipeAnimating=true;
+  const direction=yes?1:-1;
+  card.style.transition="transform .2s ease-out, opacity .2s ease-out";
+  card.style.transform=`translateX(${direction*Math.max(window.innerWidth,500)}px) rotate(${direction*16}deg)`;
+  card.style.opacity="0";
+  setTimeout(()=>{
+    swipeAnimating=false;
+    vote(yes);
+  },190);
 }
 
 function vote(yes){
@@ -528,7 +615,7 @@ async function results(options={}){
 
 function restartSwipes(){idx=0;likes=[];swipe();}
 
-const APP_VERSION="7";
+const APP_VERSION="8";
 try{
   const seen=sessionStorage.getItem("tripmatch_app_version");
   if(seen!==APP_VERSION){
