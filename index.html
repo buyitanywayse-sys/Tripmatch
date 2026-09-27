@@ -78,9 +78,24 @@ let idx = 0;
 let likes = [];
 let selectedVibes = [];
 let filteredDestinations = DESTINATIONS;
+let currentUser = null;
 
 const app = () => document.getElementById("app");
 const esc = (s="") => String(s).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[ch]));
+
+
+async function ensureUser(){
+  if(currentUser) return currentUser;
+  const {data:{session}} = await db.auth.getSession();
+  if(session?.user){
+    currentUser = session.user;
+    return currentUser;
+  }
+  const {data,error} = await db.auth.signInAnonymously();
+  if(error) throw error;
+  currentUser = data.user || data.session?.user;
+  return currentUser;
+}
 
 function goHome(){
   history.replaceState({}, "", location.pathname);
@@ -96,7 +111,7 @@ function home(){
     <p class="muted">Set dates, budget and travel vibe first. TripMatch narrows the options before everyone swipes.</p>
     <button class="primary" onclick="createForm()">Create a trip →</button>
   </div>
-  <div class="tiny">TripMatch V3 · Smart preference matching</div>`;
+  <div class="tiny">TripMatch V4 · Anonymous user IDs ready for RLS</div>`;
 }
 
 function createForm(){
@@ -147,16 +162,56 @@ function rankedDestinations(prefs){
 }
 
 async function createTrip(){
-  const title=document.getElementById("tripTitle").value.trim();
-  const owner=document.getElementById("ownerName").value.trim();
-  const origin=document.getElementById("origin").value.trim();
-  const budget=document.getElementById("budget").value;
-  const prefs={startDate:document.getElementById("startDate").value,endDate:document.getElementById("endDate").value,budget,vibes:selectedVibes,weather:document.getElementById("weather").value};
-  if(!title||!owner){alert("Add a trip name and your name.");return;}
-  const code=Math.random().toString(36).slice(2,8).toUpperCase();
-  const {data,error}=await db.from(TRIP_TABLE).insert({code,title,owner,origin:origin||null,budget,preferences:JSON.stringify(prefs)}).select().single();
-  if(error){alert("Could not create trip: "+error.message);return;}
-  trip=data; travelerName=owner; filteredDestinations=rankedDestinations(prefs); showInvite();
+  try{
+    await ensureUser();
+
+    const title=document.getElementById("tripTitle").value.trim();
+    const owner=document.getElementById("ownerName").value.trim();
+    const origin=document.getElementById("origin").value.trim();
+    const budget=document.getElementById("budget").value;
+    const prefs={
+      startDate:document.getElementById("startDate").value,
+      endDate:document.getElementById("endDate").value,
+      budget,
+      vibes:selectedVibes,
+      weather:document.getElementById("weather").value
+    };
+
+    if(!title||!owner){
+      alert("Add a trip name and your name.");
+      return;
+    }
+
+    const code=Math.random().toString(36).slice(2,8).toUpperCase();
+
+    const {data,error}=await db.from(TRIP_TABLE).insert({
+      code,
+      title,
+      owner,
+      origin:origin||null,
+      budget,
+      preferences:JSON.stringify(prefs),
+      owner_user_id:currentUser.id
+    }).select().single();
+
+    if(error) throw error;
+
+    trip=data;
+    travelerName=owner;
+    filteredDestinations=rankedDestinations(prefs);
+
+    const {error:memberError}=await db.from(MEMBER_TABLE).insert({
+      trip_code:code,
+      name:owner,
+      user_id:currentUser.id
+    });
+
+    if(memberError) throw memberError;
+
+    showInvite();
+  }catch(err){
+    alert("Could not create trip: "+err.message);
+  }
 }
 
 function inviteUrl(){
@@ -181,7 +236,7 @@ function showInvite(){
     <div class="linkbox">${esc(url)}</div>
     <div class="row">
       <button class="secondary" onclick="shareInvite()">Share invite</button>
-      <button class="primary" onclick="joinTrip('${esc(trip.code)}','${esc(travelerName)}')">Start my swipes</button>
+      <button class="primary" onclick="startMySwipes()">Start my swipes</button>
     </div>
   </div>`;
 }
@@ -195,44 +250,73 @@ async function shareInvite(){
   catch(e){prompt("Copy this link:",url);}
 }
 
-async function loadTrip(code){
-  app().innerHTML=`<div class="card"><h2>Opening your trip…</h2><p class="muted">One second.</p></div>`;
-  const {data,error}=await db.from(TRIP_TABLE).select("*").eq("code",code).maybeSingle();
-  if(error||!data){
-    app().innerHTML=`<div class="card"><h2>Trip not found</h2><p class="muted">This invite link may be incorrect.</p><button class="secondary" onclick="goHome()">Back home</button></div>`;
-    return;
-  }
-  trip=data;
-  filteredDestinations=rankedDestinations(parsePrefs(trip.preferences));
-  joinForm();
+function startMySwipes(){
+  idx=0;
+  likes=[];
+  swipe();
 }
 
-function joinForm(){
+function inviteLanding(code){
   app().innerHTML=`
   <div class="card">
-    <div class="eyebrow">You've been invited</div>
-    <h2>${esc(trip.title)}</h2>
-    ${preferenceSummary()}
+    <div class="eyebrow">TripMatch invite</div>
+    <h2>You've been invited</h2>
+    <p class="muted">Enter your name to join the trip.</p>
     <div class="field"><label>Your name</label><input id="joinName" maxlength="50" placeholder="Your name"></div>
-    <button class="primary" onclick="joinTrip('${esc(trip.code)}')">Join & start swiping →</button>
+    <button class="primary" onclick="joinTrip('${esc(code)}')">Join trip →</button>
   </div>`;
 }
 
-async function joinTrip(code,presetName=""){
-  travelerName=presetName||(document.getElementById("joinName")?.value.trim()||"");
-  if(!travelerName){alert("Add your name.");return;}
+async function joinTrip(code){
+  try{
+    await ensureUser();
 
-  const {data:existing,error:checkError}=await db.from(MEMBER_TABLE)
-    .select("*").eq("trip_code",code).eq("name",travelerName).limit(1);
+    travelerName=document.getElementById("joinName")?.value.trim()||"";
+    if(!travelerName){
+      alert("Add your name.");
+      return;
+    }
 
-  if(checkError){alert("Could not join trip: "+checkError.message);return;}
-  if(!existing||existing.length===0){
-    const {error}=await db.from(MEMBER_TABLE).insert({trip_code:code,name:travelerName});
-    if(error){alert("Could not join trip: "+error.message);return;}
+    const {data:existing,error:checkError}=await db.from(MEMBER_TABLE)
+      .select("*")
+      .eq("trip_code",code)
+      .eq("user_id",currentUser.id)
+      .limit(1);
+
+    if(checkError) throw checkError;
+
+    if(!existing||existing.length===0){
+      const {error:memberError}=await db.from(MEMBER_TABLE).insert({
+        trip_code:code,
+        name:travelerName,
+        user_id:currentUser.id
+      });
+
+      if(memberError) throw memberError;
+    }
+
+    const {data,error}=await db.from(TRIP_TABLE)
+      .select("*")
+      .eq("code",code)
+      .maybeSingle();
+
+    if(error) throw error;
+    if(!data) throw new Error("Trip not found.");
+
+    trip=data;
+    filteredDestinations=rankedDestinations(parsePrefs(trip.preferences));
+
+    app().innerHTML=`
+    <div class="card">
+      <div class="eyebrow">You're in</div>
+      <h2>${esc(trip.title)}</h2>
+      ${preferenceSummary()}
+      <p class="muted">Ready to swipe as <b>${esc(travelerName)}</b>?</p>
+      <button class="primary" onclick="startMySwipes()">Start swiping →</button>
+    </div>`;
+  }catch(err){
+    alert("Could not join trip: "+err.message);
   }
-
-  idx=0; likes=[];
-  swipe();
 }
 
 function swipe(){
@@ -262,18 +346,34 @@ function vote(yes){
 }
 
 async function submitVotes(){
-  app().innerHTML=`<div class="card"><h2>Saving your swipes…</h2><p class="muted">Checking for a group match.</p></div>`;
+  try{
+    await ensureUser();
 
-  const {error:deleteError}=await db.from(VOTE_TABLE)
-    .delete().eq("trip_code",trip.code).eq("member_name",travelerName);
-  if(deleteError){alert("Could not save votes: "+deleteError.message);return;}
+    app().innerHTML=`<div class="card"><h2>Saving your swipes…</h2><p class="muted">Checking for a group match.</p></div>`;
 
-  if(likes.length){
-    const rows=likes.map(destination=>({trip_code:trip.code,member_name:travelerName,destination}));
-    const {error}=await db.from(VOTE_TABLE).insert(rows);
-    if(error){alert("Could not save votes: "+error.message);return;}
+    const {error:deleteError}=await db.from(VOTE_TABLE)
+      .delete()
+      .eq("trip_code",trip.code)
+      .eq("user_id",currentUser.id);
+
+    if(deleteError) throw deleteError;
+
+    if(likes.length){
+      const rows=likes.map(destination=>({
+        trip_code:trip.code,
+        member_name:travelerName,
+        destination,
+        user_id:currentUser.id
+      }));
+
+      const {error}=await db.from(VOTE_TABLE).insert(rows);
+      if(error) throw error;
+    }
+
+    results();
+  }catch(err){
+    alert("Could not save votes: "+err.message);
   }
-  results();
 }
 
 async function results(){
@@ -281,16 +381,25 @@ async function results(){
     db.from(MEMBER_TABLE).select("*").eq("trip_code",trip.code),
     db.from(VOTE_TABLE).select("*").eq("trip_code",trip.code)
   ]);
-  if(memberRes.error||voteRes.error){alert("Could not load results.");return;}
 
-  const names=[...new Set((memberRes.data||[]).map(x=>x.name))];
+  if(memberRes.error||voteRes.error){
+    alert("Could not load results.");
+    return;
+  }
+
+  const members=memberRes.data||[];
+  const votes=voteRes.data||[];
+  const names=[...new Set(members.map(x=>x.name))];
+  const memberCount=new Set(members.map(x=>x.user_id||x.name)).size;
+
   const counts={};
-  (voteRes.data||[]).forEach(v=>{
-    if(!counts[v.destination])counts[v.destination]=new Set();
-    counts[v.destination].add(v.member_name);
+  votes.forEach(v=>{
+    if(!counts[v.destination]) counts[v.destination]=new Set();
+    counts[v.destination].add(v.user_id||v.member_name);
   });
+
   const matches=Object.entries(counts)
-    .filter(([_,set])=>names.length>1&&set.size===names.length)
+    .filter(([_,set])=>memberCount>1&&set.size===memberCount)
     .map(([destination])=>destination);
 
   if(matches.length){
@@ -305,12 +414,12 @@ async function results(){
       <button class="primary" onclick="shareInvite()">Share trip</button>
       <button class="secondary" style="margin-top:10px" onclick="restartSwipes()">Swipe again</button>
     </div>`;
-  } else {
+  }else{
     app().innerHTML=`
     <div class="card match">
       <div class="big">✈️</div>
       <h2>Your swipes are in!</h2>
-      <p class="muted">${names.length<2
+      <p class="muted">${memberCount<2
         ?"Now invite someone else. A match appears when at least two travelers have swiped and liked the same destination."
         :"No full-group match yet. Someone may still need to finish swiping, or your group chose different places."}</p>
       <div class="people">${names.map(n=>`<span class="person">${esc(n)}</span>`).join("")}</div>
@@ -322,9 +431,19 @@ async function results(){
 
 function restartSwipes(){idx=0;likes=[];swipe();}
 
-const params=new URLSearchParams(location.search);
-const codeFromLink=params.get("trip");
-codeFromLink?loadTrip(codeFromLink):home();
+async function boot(){
+  app().innerHTML=`<div class="card"><h2>Starting TripMatch…</h2><p class="muted">Creating your anonymous session.</p></div>`;
+  try{
+    await ensureUser();
+    const params=new URLSearchParams(location.search);
+    const codeFromLink=params.get("trip");
+    codeFromLink?inviteLanding(codeFromLink):home();
+  }catch(err){
+    app().innerHTML=`<div class="card"><h2>Could not start TripMatch</h2><p class="muted">${esc(err.message)}</p></div>`;
+  }
+}
+
+boot();
 </script>
 </body>
 </html>
