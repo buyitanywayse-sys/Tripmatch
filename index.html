@@ -117,7 +117,7 @@ function home(){
     <p class="muted">Set dates, budget and travel vibe first. TripMatch narrows the options before everyone swipes.</p>
     <button class="primary" onclick="createForm()">Create a trip →</button>
   </div>
-  <div class="tiny">TripMatch V5 · Better group results</div>`;
+  <div class="tiny">TripMatch V6 · Live synced results</div>`;
 }
 
 function createForm(){
@@ -378,14 +378,26 @@ async function submitVotes(){
       if(error) throw error;
     }
 
-    results();
+    resultsRefreshAttempts=0;
+    await new Promise(r=>setTimeout(r,700));
+    await results();
   }catch(err){
     alert("Could not save votes: "+err.message);
   }
 }
 
-async function results(){
-  app().innerHTML=`<div class="card match"><div class="big">🔎</div><h2>Checking group results…</h2><p class="muted">Looking for shared destinations.</p></div>`;
+let resultsRefreshTimer=null;
+let resultsRefreshAttempts=0;
+
+function scheduleResultsRefresh(){
+  clearTimeout(resultsRefreshTimer);
+  if(resultsRefreshAttempts>=6) return;
+  resultsRefreshAttempts++;
+  resultsRefreshTimer=setTimeout(()=>results({silent:true,auto:true}),2000);
+}
+
+async function results(options={}){
+  if(!options.silent) app().innerHTML=`<div class="card match"><div class="big">🔎</div><h2>Checking group results…</h2><p class="muted">Looking for shared destinations.</p></div>`;
 
   const [memberRes,voteRes]=await Promise.all([
     db.from(MEMBER_TABLE).select("*").eq("trip_code",trip.code),
@@ -443,8 +455,10 @@ async function results(){
       ${matches.length>1?`<div class="summary"><b>You have ${matches.length} matches</b><span class="muted">Here are all the places everyone liked.</span></div><div class="matchlist">${allMatches}</div>`:""}
       <div class="statusline">${esc(status)}</div>
       <button class="primary" onclick="shareInvite()">Share trip</button>
+      <button class="secondary" style="margin-top:10px" onclick="resultsRefreshAttempts=0;results()">Refresh results</button>
       <button class="secondary" style="margin-top:10px" onclick="restartSwipes()">Swipe again</button>
     </div>`;
+    if(options.auto || resultsRefreshAttempts===0) scheduleResultsRefresh();
   }else{
     const near=ranking.slice(0,3).map(r=>{
       const d=DESTINATIONS.find(x=>x.name===r.destination)||{emoji:"✈️",name:r.destination};
@@ -462,12 +476,22 @@ async function results(){
       <div class="statusline">${esc(status)}</div>
       ${near?`<div class="summary"><b>Closest group picks</b><span class="muted">These are the destinations with the most likes so far.</span></div><div class="resultgrid">${near}</div>`:""}
       <button class="primary" onclick="shareInvite()">Share invite</button>
-      <button class="secondary" style="margin-top:10px" onclick="results()">Refresh results</button>
+      <button class="secondary" style="margin-top:10px" onclick="resultsRefreshAttempts=0;results()">Refresh results</button>
     </div>`;
+    if(options.auto || resultsRefreshAttempts===0) scheduleResultsRefresh();
   }
 }
 
 function restartSwipes(){idx=0;likes=[];swipe();}
+
+const APP_VERSION="6";
+try{
+  const seen=sessionStorage.getItem("tripmatch_app_version");
+  if(seen!==APP_VERSION){
+    sessionStorage.setItem("tripmatch_app_version",APP_VERSION);
+    if(seen) location.reload();
+  }
+}catch(e){}
 
 async function boot(){
   app().innerHTML=`<div class="card"><h2>Starting TripMatch…</h2><p class="muted">Creating your anonymous session.</p></div>`;
