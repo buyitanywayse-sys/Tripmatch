@@ -38,6 +38,12 @@ h2{font-size:30px;line-height:1.05;letter-spacing:-1.5px;margin:8px 0 12px}
 .notice{padding:13px;border-radius:14px;background:#fff1ee;color:#8f3d43;font-size:13px;line-height:1.45;margin:14px 0}
 .tiny{font-size:12px;color:#8b9298;text-align:center;margin:24px 0}
 .desttitle{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+
+.resultgrid{display:grid;gap:10px;margin:16px 0}
+.resultitem{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 15px;border:1px solid var(--line);border-radius:16px;background:#fff}
+.resultitem strong{font-size:17px}.resultmeta{font-size:12px;color:var(--muted);margin-top:3px}
+.matchlist{display:grid;gap:10px;margin:16px 0}.matchitem{padding:15px;border-radius:18px;background:#faf6f3;border:1px solid var(--line);text-align:left}
+.matchitem .place{font-weight:900;font-size:18px}.statusline{font-size:13px;color:var(--muted);margin:8px 0 0}
 @media(max-width:560px){h1{font-size:40px}.wrap{padding:18px}.row{grid-template-columns:1fr}}
 </style>
 </head>
@@ -111,7 +117,7 @@ function home(){
     <p class="muted">Set dates, budget and travel vibe first. TripMatch narrows the options before everyone swipes.</p>
     <button class="primary" onclick="createForm()">Create a trip →</button>
   </div>
-  <div class="tiny">TripMatch V4 · Anonymous user IDs ready for RLS</div>`;
+  <div class="tiny">TripMatch V5 · Better group results</div>`;
 }
 
 function createForm(){
@@ -293,6 +299,8 @@ async function joinTrip(code){
       });
 
       if(memberError) throw memberError;
+    }else{
+      travelerName=existing[0].name||travelerName;
     }
 
     const {data,error}=await db.from(TRIP_TABLE)
@@ -377,6 +385,8 @@ async function submitVotes(){
 }
 
 async function results(){
+  app().innerHTML=`<div class="card match"><div class="big">🔎</div><h2>Checking group results…</h2><p class="muted">Looking for shared destinations.</p></div>`;
+
   const [memberRes,voteRes]=await Promise.all([
     db.from(MEMBER_TABLE).select("*").eq("trip_code",trip.code),
     db.from(VOTE_TABLE).select("*").eq("trip_code",trip.code)
@@ -387,42 +397,70 @@ async function results(){
     return;
   }
 
-  const members=memberRes.data||[];
+  const rawMembers=memberRes.data||[];
   const votes=voteRes.data||[];
-  const names=[...new Set(members.map(x=>x.name))];
-  const memberCount=new Set(members.map(x=>x.user_id||x.name)).size;
+
+  // One traveler per anonymous user ID. Older rows without IDs fall back to their name.
+  const memberMap=new Map();
+  rawMembers.forEach(m=>{
+    const key=m.user_id||`name:${m.name}`;
+    if(!memberMap.has(key)) memberMap.set(key,m);
+  });
+  const members=[...memberMap.values()];
+  const names=members.map(x=>x.name);
+  const memberCount=members.length;
 
   const counts={};
+  const voters=new Set();
   votes.forEach(v=>{
+    const voter=v.user_id||`name:${v.member_name}`;
+    voters.add(voter);
     if(!counts[v.destination]) counts[v.destination]=new Set();
-    counts[v.destination].add(v.user_id||v.member_name);
+    counts[v.destination].add(voter);
   });
 
-  const matches=Object.entries(counts)
-    .filter(([_,set])=>memberCount>1&&set.size===memberCount)
-    .map(([destination])=>destination);
+  const ranking=Object.entries(counts)
+    .map(([destination,set])=>({destination,count:set.size}))
+    .sort((a,b)=>b.count-a.count || a.destination.localeCompare(b.destination));
+
+  const matches=ranking.filter(x=>memberCount>1&&x.count===memberCount);
+  const status=`${Math.min(voters.size,memberCount)} of ${memberCount} traveler${memberCount===1?"":"s"} have liked at least one destination.`;
 
   if(matches.length){
-    const d=DESTINATIONS.find(x=>x.name===matches[0])||{emoji:"✈️",name:matches[0]};
+    const primary=DESTINATIONS.find(x=>x.name===matches[0].destination)||{emoji:"✈️",name:matches[0].destination};
+    const allMatches=matches.map(m=>{
+      const d=DESTINATIONS.find(x=>x.name===m.destination)||{emoji:"✈️",name:m.destination,country:""};
+      return `<div class="matchitem"><div class="place">${d.emoji} ${esc(d.name)}</div><div class="resultmeta">Everyone matched${d.country?` · ${esc(d.country)}`:""}</div></div>`;
+    }).join("");
+
     app().innerHTML=`
     <div class="card match">
       <div class="big">🎉</div>
       <div class="eyebrow">It's a TripMatch</div>
-      <h1>${d.emoji} ${d.name}</h1>
+      <h1>${primary.emoji} ${esc(primary.name)}</h1>
       <p class="muted">Everyone in the group liked this destination.</p>
       <div class="people">${names.map(n=>`<span class="person">✓ ${esc(n)}</span>`).join("")}</div>
+      ${matches.length>1?`<div class="summary"><b>You have ${matches.length} matches</b><span class="muted">Here are all the places everyone liked.</span></div><div class="matchlist">${allMatches}</div>`:""}
+      <div class="statusline">${esc(status)}</div>
       <button class="primary" onclick="shareInvite()">Share trip</button>
       <button class="secondary" style="margin-top:10px" onclick="restartSwipes()">Swipe again</button>
     </div>`;
   }else{
+    const near=ranking.slice(0,3).map(r=>{
+      const d=DESTINATIONS.find(x=>x.name===r.destination)||{emoji:"✈️",name:r.destination};
+      return `<div class="resultitem"><div><strong>${d.emoji} ${esc(d.name)}</strong><div class="resultmeta">Liked by ${r.count} of ${memberCount}</div></div><span class="person">${r.count}/${memberCount}</span></div>`;
+    }).join("");
+
     app().innerHTML=`
     <div class="card match">
       <div class="big">✈️</div>
-      <h2>Your swipes are in!</h2>
+      <h2>${memberCount<2?"Your swipes are in!":"No full-group match yet"}</h2>
       <p class="muted">${memberCount<2
-        ?"Now invite someone else. A match appears when at least two travelers have swiped and liked the same destination."
-        :"No full-group match yet. Someone may still need to finish swiping, or your group chose different places."}</p>
+        ?"Invite someone else. A match appears when at least two travelers like the same destination."
+        :"Someone may still need to finish swiping, or the group chose different places."}</p>
       <div class="people">${names.map(n=>`<span class="person">${esc(n)}</span>`).join("")}</div>
+      <div class="statusline">${esc(status)}</div>
+      ${near?`<div class="summary"><b>Closest group picks</b><span class="muted">These are the destinations with the most likes so far.</span></div><div class="resultgrid">${near}</div>`:""}
       <button class="primary" onclick="shareInvite()">Share invite</button>
       <button class="secondary" style="margin-top:10px" onclick="results()">Refresh results</button>
     </div>`;
